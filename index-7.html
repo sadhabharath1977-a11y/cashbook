@@ -1,0 +1,88 @@
+<!DOCTYPE html><html lang="ta"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1220"><meta name="mobile-web-app-capable" content="yes"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><title>Cash Book</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0b1220;--cd:#152036;--in:#2fdc8a;--ex:#ff6161;--ac:#7b86ff;--tx:#f5f8ff;--mu:#a3b1cf;--bd:#2a3b5c}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font:18px/1.45 'Noto Sans Tamil',system-ui,sans-serif;padding:env(safe-area-inset-top) 14px 100px}
+header{text-align:center;padding:14px 0 6px}h1{font-size:28px}header p{color:var(--mu);font-size:16px}
+.mn{display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0 12px;font-size:20px;font-weight:700}
+.mn button{background:var(--cd);color:var(--tx);border:1px solid var(--bd);border-radius:12px;width:46px;height:46px;font-size:22px}
+#st{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+#st div{background:var(--cd);border-radius:16px;padding:12px 6px;text-align:center;border-bottom:4px solid var(--bd)}
+#st div:nth-child(1){border-color:var(--in)}#st div:nth-child(2){border-color:var(--ex)}#st div:nth-child(3){border-color:var(--ac)}
+#st small{display:block;color:var(--mu);font-size:15px}#st b{font-size:20px}
+.in{color:var(--in)}.ex{color:var(--ex)}.ac{color:var(--ac)}.mu{color:var(--mu)}
+.card{background:var(--cd);border-radius:20px;padding:18px}h2{font-size:22px;margin-bottom:10px}
+.r{display:flex;align-items:center;gap:8px;padding:12px 0;border-top:1px solid var(--bd)}
+.g{flex:1;min-width:0}.g span{color:#dbe4ff}.g small{display:block;color:var(--mu);font-size:15px}
+.a{font-weight:800;white-space:nowrap}.x{background:none;border:0;color:var(--mu);font-size:22px;padding:8px}
+label,.lb{display:flex;justify-content:space-between;color:var(--mu);margin:12px 0 5px;font-size:16px}.lb a{color:var(--ac);font-weight:700}
+input,select{width:100%;background:#1c2b47;color:var(--tx);border:1px solid var(--bd);border-radius:14px;padding:14px;font:inherit}
+.dp{display:grid;grid-template-columns:1fr 1.7fr 1.2fr;gap:6px}.dp select{padding:14px 6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big{width:100%;margin-top:16px;padding:16px;border:0;border-radius:16px;font:700 20px inherit;color:#06101f}
+.bin{background:var(--in)}.bex{background:var(--ex)}.bac{background:var(--ac);color:#fff}.bo{background:none;border:1px solid var(--bd);color:var(--tx)}
+.mg{background:#101a2e;border-radius:14px;padding:10px;margin:10px 0}.mr{display:flex;gap:6px;margin:6px 0}.mr button{background:#1c2b47;border:1px solid var(--bd);border-radius:12px;padding:0 13px;font-size:20px}
+.bar{height:10px;border-radius:6px;background:var(--ex);margin-top:4px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0f1a2e;border-top:1px solid var(--bd);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;border:0;color:var(--mu);font:inherit;font-size:14px;padding:4px}nav button i{display:block;font-style:normal;font-size:26px}nav .on{color:var(--ac);font-weight:700}
+#t{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#fff;color:#111;padding:12px 20px;border-radius:30px;font-weight:700;display:none;z-index:9}
+#pdf{position:fixed;left:-9999px;top:0;width:720px;background:#fff;color:#1b2540;font-size:20px;padding:20px}
+#pdf h1{background:linear-gradient(90deg,#6c5ce7,#00b894);color:#fff;padding:16px;border-radius:14px;font-size:30px}#pdf h3{font-size:24px;color:#6c5ce7;margin:22px 0 8px}
+#pdf .bx{display:flex;gap:10px}#pdf .bx div{flex:1;border-radius:12px;padding:12px;color:#fff;text-align:center;font-weight:800;font-size:22px}
+#pdf table{width:100%;border-collapse:collapse;font-size:18px}#pdf td,#pdf th{border:1px solid #d5dcf0;padding:8px}#pdf th{background:#eef1ff}
+</style></head><body>
+<header><h1>💰 Cash Book</h1><p>வரவு செலவு கணக்கு</p></header>
+<div class=mn><button onclick="mv(-1)">‹</button><span id=mo></span><button onclick="mv(1)">›</button></div>
+<div id=st></div><div id=main></div><div id=t></div><div id=pdf></div>
+<nav><button data-t=home onclick="go('home')"><i>🏠</i>முகப்பு</button><button data-t=income onclick="go('income')"><i>➕</i>வரவு</button><button data-t=expense onclick="go('expense')"><i>➖</i>செலவு</button><button data-t=report onclick="go('report')"><i>📊</i>அறிக்கை</button><button data-t=settings onclick="go('settings')"><i>⚙️</i>அமைப்பு</button></nav>
+<script>
+const $=s=>document.querySelector(s),L=localStorage;let S;try{S=JSON.parse(L.cb)}catch(e){}
+S=S||{e:[],d:[],url:'',c:{income:['SARAVANAN SALARY','TOWER RENT','GIFT','VINU CONTRIBUTION'],expense:['OUT SIDE FOOD','GROCERIES AND VEGETABLES','MAINTENANCE AND SERVICE','NON VEG','MEDICAL','PETROL','OTHER']}};
+const save=()=>{L.cb=JSON.stringify(S)},p2=n=>String(n).padStart(2,'0'),today=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
+let M=today().slice(0,7),tab='home',mg=false,rf=M+'-01',rt=today();
+const fd=d=>d.split('-').reverse().join('/'),inr=n=>'₹'+Number(n).toLocaleString('en-IN'),esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dp=(id,v)=>{const[y,m,d]=v.split('-').map(Number),Y=new Date().getFullYear(),a=Math.min(y,Y-3),ys=[];for(let i=a;i<=Math.max(y,Y)+1;i++)ys.push(i);
+return `<div class=dp id=${id}><select>${Array.from({length:31},(_,i)=>`<option${i+1==d?' selected':''}>${i+1}</option>`).join('')}</select><select>${MN.map((n,i)=>`<option value=${i+1}${i+1==m?' selected':''}>${n}</option>`).join('')}</select><select>${ys.map(k=>`<option${k==y?' selected':''}>${k}</option>`).join('')}</select></div>`};
+const gd=id=>{const s=document.querySelectorAll('#'+id+' select'),m=+s[1].value,y=+s[2].value,d=Math.min(+s[0].value,new Date(y,m,0).getDate());return y+'-'+p2(m)+'-'+p2(d)};
+const MN=['ஜனவரி','பிப்ரவரி','மார்ச்','ஏப்ரல்','மே','ஜூன்','ஜூலை','ஆகஸ்ட்','செப்டம்பர்','அக்டோபர்','நவம்பர்','டிசம்பர்'];
+const sum=(a,t)=>a.filter(x=>x.type==t).reduce((s,x)=>s+x.amount,0),srt=a=>a.sort((x,y)=>y.date.localeCompare(x.date)||y.id.localeCompare(x.id));
+const toast=m=>{const t=$('#t');t.textContent=m;t.style.display='block';clearTimeout(t.h);t.h=setTimeout(()=>t.style.display='none',2500)};
+const go=t=>{tab=t;mg=false;render()};
+function mv(n){let y=+M.slice(0,4),m=+M.slice(5)+n;if(m<1){m=12;y--}if(m>12){m=1;y++}M=y+'-'+p2(m);render()}
+const row=x=>`<div class=r><div class=g><b>${esc(x.category)}</b>${x.note?'<span> · '+esc(x.note)+'</span>':''}<small>${fd(x.date)}</small></div><div class="a ${x.type=='income'?'in':'ex'}">${x.type=='income'?'+':'-'}${inr(x.amount)}</div><button class=x onclick="del('${x.id}')">✕</button></div>`;
+function render(){const m=S.e.filter(x=>x.date.slice(0,7)==M),i=sum(m,'income'),e=sum(m,'expense');
+$('#mo').textContent=MN[+M.slice(5)-1]+' '+M.slice(0,4);
+$('#st').innerHTML=`<div><small>வரவு</small><b class=in>${inr(i)}</b></div><div><small>செலவு</small><b class=ex>${inr(e)}</b></div><div><small>இருப்பு</small><b class=ac>${inr(i-e)}</b></div>`;
+document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==tab));
+$('#main').innerHTML=tab=='home'?`<div class=card><h2>சமீபத்திய பதிவுகள்</h2>${srt(m).map(row).join('')||'<p class=mu>இந்த மாதம் பதிவுகள் இல்லை. ➕ வரவு அல்லது ➖ செலவு சேர்க்கவும்.</p>'}</div>`:tab=='report'?report():tab=='settings'?settings():form(tab)}
+const manage=t=>`<div class=mg>${S.c[t].map((x,i)=>`<div class=mr><input id=m${i} value="${esc(x)}"><button onclick="ren('${t}',${i})">💾</button><button onclick="rm('${t}',${i})">🗑</button></div>`).join('')}<div class=mr><input id=nc placeholder="புதிய வகை"><button onclick="addc('${t}')">＋</button></div></div>`;
+function form(t){const inc=t=='income';return `<div class=card><h2>${inc?'வரவு சேர்':'செலவு சேர்'}</h2><div class=lb><span>வகை</span><a onclick="mg=!mg;render()">⚙ மாற்று</a></div><select id=cat>${S.c[t].map(x=>`<option>${esc(x)}</option>`).join('')}</select>${mg?manage(t):''}
+<label>தொகை (₹)</label><input id=amt type=number inputmode=decimal placeholder=0><label>நாள் / மாதம் / வருடம்</label>${dp('dt',today())}
+<label>குறிப்பு (விருப்பம்)</label><input id=nt placeholder="${inc?'எ.கா. சம்பளம்':'எ.கா. மளிகை'}"><button class="big ${inc?'bin':'bex'}" onclick="add('${t}')">+ ${inc?'வரவு':'செலவு'} சேர்</button></div>`}
+function add(t){const a=parseFloat($('#amt').value);if(!(a>0))return toast('தொகையை உள்ளிடவும்');const d=gd('dt');
+S.e.push({id:'e'+Date.now(),type:t,category:$('#cat').value,amount:a,date:d,note:$('#nt').value.trim()});save();M=d.slice(0,7);tab='home';render();toast('சேர்க்கப்பட்டது ✔');sync(1)}
+function del(id){if(!confirm('இந்த பதிவை நீக்கவா?'))return;S.e=S.e.filter(x=>x.id!=id);S.d.push(id);save();render();sync(1)}
+function ren(t,i){const n=$('#m'+i).value.trim(),o=S.c[t][i];if(!n)return;S.e.forEach(x=>{if(x.type==t&&x.category==o)x.category=n});S.c[t][i]=n;save();render();toast('சேமிக்கப்பட்டது ✔')}
+function rm(t,i){if(confirm('இந்த வகையை நீக்கவா?')){S.c[t].splice(i,1);save();render()}}
+function addc(t){const n=$('#nc').value.trim();if(n&&!S.c[t].includes(n)){S.c[t].push(n);save();render()}}
+const rep=()=>srt(S.e.filter(x=>(!rf||x.date>=rf)&&(!rt||x.date<=rt)));
+function cats(r){const o={};r.filter(x=>x.type=='expense').forEach(x=>o[x.category]=(o[x.category]||0)+x.amount);return Object.entries(o).sort((a,b)=>b[1]-a[1])}
+function report(){const r=rep(),c=cats(r),mx=c.length?c[0][1]:1;return `<div class=card><h2>அறிக்கை</h2><label>தொடக்கம் (நாள் / மாதம் / வருடம்)</label>${dp('rf',rf)}<label>முடிவு (நாள் / மாதம் / வருடம்)</label>${dp('rt',rt)}
+<button class="big bo" onclick="rf=gd('rf');rt=gd('rt');render()">வடிகட்டு</button><button class="big bac" onclick="pdf()">⬇ PDF பதிவிறக்கம்</button><button class="big bac" onclick="xls()">⬇ Excel பதிவிறக்கம்</button></div>
+<div class=card style="margin-top:14px"><h2>வகை வாரியாக செலவு</h2>${c.map(([k,v])=>`<div style="margin:10px 0"><div style="display:flex;justify-content:space-between"><span>${esc(k)}</span><b class=ex>${inr(v)}</b></div><div class=bar style="width:${Math.max(4,v/mx*100)}%"></div></div>`).join('')||'<p class=mu>செலவு இல்லை</p>'}</div>
+<div class=card style="margin-top:14px"><h2>அனைத்து பதிவுகள் (${r.length})</h2>${r.map(row).join('')}</div>`}
+function pdf(){const r=rep(),i=sum(r,'income'),e=sum(r,'expense');
+$('#pdf').innerHTML=`<h1>💰 வரவு செலவு அறிக்கை</h1><p style="margin:8px 0">${fd(rf)} முதல் ${fd(rt)} வரை</p><h3>1. சுருக்கம்</h3><div class=bx><div style="background:#00b894">வரவு<br>${inr(i)}</div><div style="background:#e17055">செலவு<br>${inr(e)}</div><div style="background:#6c5ce7">இருப்பு<br>${inr(i-e)}</div></div>
+<h3>2. வகை வாரியாக செலவு</h3><table>${cats(r).map(([k,v])=>`<tr><td>${esc(k)}</td><td align=right><b>${inr(v)}</b></td></tr>`).join('')}</table>
+<h3>3. அனைத்து பதிவுகள்</h3><table><tr><th>தேதி</th><th>வகை</th><th>குறிப்பு</th><th>தொகை</th></tr>${r.map(x=>`<tr><td>${fd(x.date)}</td><td>${esc(x.category)}</td><td>${esc(x.note)}</td><td align=right style="color:${x.type=='income'?'#00b894':'#d63031'}"><b>${x.type=='income'?'+':'-'}${inr(x.amount)}</b></td></tr>`).join('')}</table>`;
+if(!window.html2pdf)return toast('இணைய இணைப்பு தேவை');toast('PDF தயாராகிறது…');html2pdf().set({margin:8,filename:`CashBook_${rf}_${rt}.pdf`,html2canvas:{scale:2},jsPDF:{format:'a4'},pagebreak:{mode:['css','legacy']}}).from($('#pdf')).save()}
+function xls(){if(!window.XLSX)return toast('இணைய இணைப்பு தேவை');const r=rep(),w=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(w,XLSX.utils.json_to_sheet(r.map(x=>({'தேதி':fd(x.date),'வகை':x.type=='income'?'வரவு':'செலவு','பிரிவு':x.category,'தொகை':x.amount,'குறிப்பு':x.note}))),'Entries');
+XLSX.utils.book_append_sheet(w,XLSX.utils.json_to_sheet([{'வரவு':sum(r,'income'),'செலவு':sum(r,'expense'),'இருப்பு':sum(r,'income')-sum(r,'expense')}]),'Summary');XLSX.writeFile(w,`CashBook_${rf}_${rt}.xlsx`)}
+const settings=()=>`<div class=card><h2>Google Sheet இணைப்பு</h2><p class=mu style="font-size:16px">Apps Script Web App URL-ஐ இங்கே ஒட்டவும். இல்லாவிட்டால் தரவு இந்த போனில் மட்டும் சேமிக்கப்படும்.</p><label>Web App URL</label><input id=url value="${esc(S.url)}" placeholder="https://script.google.com/macros/s/.../exec"><button class="big bac" onclick="S.url=$('#url').value.trim();save();toast('சேமிக்கப்பட்டது ✔')">சேமி</button><button class="big bo" onclick="sync()">🔄 இப்போது Sync செய்</button></div>`;
+async function sync(q){if(!S.url)return q||toast('முதலில் URL சேமிக்கவும்');try{const r=await fetch(S.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({entries:S.e,deleted:S.d})}),j=await r.json();S.e=j.entries;S.d=[];S.e.forEach(x=>{if(S.c[x.type]&&!S.c[x.type].includes(x.category))S.c[x.type].push(x.category)});save();render();q||toast('Sync முடிந்தது ✔')}catch(e){q||toast('Sync தோல்வி: '+e.message)}}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();sync(1);
+</script></body></html>
